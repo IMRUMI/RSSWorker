@@ -1,7 +1,11 @@
 import { renderRss2 } from '../../utils/util';
 
 let getUser = async (url) => {
-	let res = await fetch(url);
+	let res = await fetch(url, {
+		headers: {
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+		}
+	});
 	let scripts = [];
 	let rewriter = new HTMLRewriter()
 		.on('script', {
@@ -44,6 +48,7 @@ let deal = async (ctx) => {
 			n.map(({ noteCard }) => ({
 				title: noteCard.displayTitle,
 				link: `${url}/${noteCard.noteId}`,
+				guid: noteCard.displayTitle,
 				description: `<img src ="${noteCard.cover.infoList.pop().url}"><br>${noteCard.displayTitle}`,
 				author: noteCard.user.nickname,
 				upvotes: noteCard.interactInfo.likedCount,

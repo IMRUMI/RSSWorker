@@ -1,4 +1,5 @@
 import { renderRss2 } from '../../utils/util';
+import { substr } from 'runes2';
 
 let deal = async (ctx) => {
 	const { username } = ctx.req.param();
@@ -22,23 +23,39 @@ let deal = async (ctx) => {
 				description += element.getAttribute('content');
 			},
 		})
-		.on('.tgme_widget_message_bubble > .tgme_widget_message_text', {
+		.on('.tgme_widget_message_bubble', {
 			element(element) {
 				tgme_widget_message_texts.push('');
 			},
+		})
+		.on('.tgme_widget_message_bubble > .tgme_widget_message_text', {
 			text(text) {
 				tgme_widget_message_texts[tgme_widget_message_texts.length - 1] += text.text;
 			},
 		})
-		.on('.tgme_widget_message_bubble > .tgme_widget_message_text > *', {
+		.on('.tgme_widget_message_bubble .tgme_widget_message_photo_wrap', {
 			element(element) {
-				// add <br> tag
+				let style = element.getAttribute('style');
+				let url = style.match(/background-image:url\('(.+)'\)/)[1];
+				tgme_widget_message_texts[tgme_widget_message_texts.length - 1] += '<img src="' + url + '" />';
 				tgme_widget_message_texts[tgme_widget_message_texts.length - 1] += '<br>';
+			},
+		})
+		.on('.tgme_widget_message_bubble > .tgme_widget_message_text > b', {
+			element(element) {
+				// add <b> tag
+				tgme_widget_message_texts[tgme_widget_message_texts.length - 1] += '<b>';
 			},
 			text(text) {
 				if (text.lastInTextNode) {
-					tgme_widget_message_texts[tgme_widget_message_texts.length - 1] += '<br>';
+					tgme_widget_message_texts[tgme_widget_message_texts.length - 1] += '</b>';
 				}
+			},
+		})
+		.on('.tgme_widget_message_bubble > .tgme_widget_message_text > br', {
+			element(element) {
+				// add <br> tag
+				tgme_widget_message_texts[tgme_widget_message_texts.length - 1] += '<br>';
 			},
 		})
 		.on('.tgme_widget_message_date > time', {
@@ -62,8 +79,11 @@ let deal = async (ctx) => {
 			continue;
 		}
 		let title = tgme_widget_message_texts[i].replace(/<br>/g, ' ');
+		title = title.replace(/<b>|<\/b>|<img.*>/g, '');
 		if (title.length > 100) {
-			title = title.slice(0, 100) + '...';
+			title = substr(title, 0, 100) + '...';
+		} else if (title.trim().length === 0) {
+			title = '无标题';
 		}
 		let item = {
 			title: title,
